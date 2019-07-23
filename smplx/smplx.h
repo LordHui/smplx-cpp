@@ -6,22 +6,44 @@
 class Smplx
 {
 public:
-	const static int JOINT_SIZE = 55;
-	const static int SHAPE_SIZE = 10;
-	const static int EXPRESSION_SIZE = 10;
-	const static int SHAPE_EXPRESSION_SIZE = SHAPE_SIZE + EXPRESSION_SIZE;
-
+	struct Conf
+	{
+		int jointSize;
+		int somatotypeSize;
+		int expressionSize;
+		int shapeSize;
+		int faceSize;
+		int vertexSize;
+		Conf(const std::string& confFile);
+	};
 
 	struct Param
 	{
-		Eigen::Vector3f translation;
-		Eigen::VectorXf pose;
-		Eigen::VectorXf shape;
-		Eigen::VectorXf expression;
+		const Conf conf;
+		Eigen::VectorXf data;
 
-		Param();
-		void SetZero();
-		void SetRandom();
+		auto GetTrans() { return data.segment<3>(0); }
+		auto GetTrans() const { return data.segment<3>(0); }
+
+		auto GetPose() { return data.segment(3, conf.jointSize * 3); }
+		auto GetPose() const { return data.segment(3, conf.jointSize * 3); }
+
+		auto GetPose(const int& jIdx) { return data.segment<3>(3 + jIdx * 3); }
+		auto GetPose(const int& jIdx) const { return data.segment<3>(3 + jIdx * 3); }
+
+		auto GetTransPose() { return data.segment(0, 3 + conf.jointSize * 3); }
+		auto GetTransPose() const { return data.segment(0, 3 + conf.jointSize * 3); }
+
+		auto GetSomatotype() { return data.segment(3 + conf.jointSize * 3, conf.somatotypeSize); }
+		auto GetSomatotype() const { return data.segment(3 + conf.jointSize * 3, conf.somatotypeSize); }
+
+		auto GetExpression() { return data.segment(3 + conf.jointSize * 3 + conf.somatotypeSize, conf.expressionSize); }
+		auto GetExpression() const { return data.segment(3 + conf.jointSize * 3 + conf.somatotypeSize, conf.expressionSize); }
+
+		auto GetShape() { return data.segment(3 + conf.jointSize * 3, conf.somatotypeSize + conf.expressionSize); }
+		auto GetShape() const { return data.segment(3 + conf.jointSize * 3, conf.somatotypeSize + conf.expressionSize); }
+
+		Param(const Conf& _conf);
 	};
 
 	Smplx(const std::string &modelPath);
@@ -37,10 +59,8 @@ public:
 	void CalcVFinal(const Param& param, Eigen::Matrix3Xf* vFinal) const;
 	void Debug(const Param& param, const std::string& filename) const;
 
+	const Conf conf;
 protected:
-	int m_faceSize;
-	int m_vertexSize;
-
 	Eigen::Matrix3Xf m_joints;
 	Eigen::Matrix3Xf m_vertices;
 	Eigen::Matrix3Xi m_faces;
